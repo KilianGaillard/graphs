@@ -1,8 +1,10 @@
 package m1graphs2026;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Graph {
     Map<Node, List<Edge>> adjEdList;
@@ -167,8 +169,67 @@ public class Graph {
     }
 
     
-    public List<Node> getSuccessors(Node n){return null;}
-    public List<Node> getSuccessorsMulti(Node n){return null;}
+    public List<Node> getSuccessors(Node n){
+        Set<Node> result = new LinkedHashSet<>();
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            Node node = entry.getKey();
+            if(node.equals(n)){
+                List<Edge> edges = entry.getValue();
+                for(Edge e : edges) {
+                    result.add(e.to());
+                }
+            }
+        }
+        return new ArrayList<>(result);
+
+    }
+
+
+    public List<Node> getSuccesors(int id){
+        Set<Node> result = new LinkedHashSet<>();
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            Node node = entry.getKey();
+            if(node.getId()==id){
+                List<Edge> edges = entry.getValue();
+                for(Edge e : edges) {
+                    result.add(e.to());
+                }
+            }
+        }
+        return new ArrayList<>(result);
+    }
+
+
+    public List<Node> getSuccessorsMulti(Node n){
+        List<Node> result = new ArrayList<>();
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            Node node = entry.getKey();
+            if(node.equals(n)){
+                List<Edge> edges = entry.getValue();
+                for(Edge e : edges) {
+                    result.add(e.to());
+                }
+            }
+        }
+        return result;
+    }
+
+
+    public List<Node> getSuccessorsMulti(int id){
+        List<Node> result = new ArrayList<>();
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            Node node = entry.getKey();
+            if(node.getId()==id){
+                List<Edge> edges = entry.getValue();
+                for(Edge e : edges) {
+                    result.add(e.to());
+                }
+            }
+        }
+        return result;
+    }
+
+    
     public boolean adjacent(Node u, Node v){return true;}
     public int inDegree(Node n){return n.inDegree();}
     public int outDegree(Node n){return n.outDegree();}

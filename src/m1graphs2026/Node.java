@@ -1,6 +1,5 @@
 package m1graphs2026;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -113,7 +112,7 @@ public class Node implements Comparable<Node>{
 
 
     public List<Node> getSuccessors(){
-        Set<Node> result = new LinkedHashSet<>();   // garde l'ordre d'insertion
+        Set<Node> result = new LinkedHashSet<>();
         for(Edge e : getOutEdges()){
             result.add(e.to());
         }
