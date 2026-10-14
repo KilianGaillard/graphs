@@ -235,9 +235,23 @@ public class Graph {
     }
 
     public int inDegree(Node n){return n.inDegree();}
+
+
     public int outDegree(Node n){return n.outDegree();}
+
+
     public int degree(Node n){return n.degree();}
-    public int nbEdges(){return 0;}
+
+
+    public int nbEdges(){
+        int count = 0;
+        for(List<Edge> edges : adjEdList.values()){
+            for(Edge e : edges){
+                count++;
+            }
+        }
+        return count;
+    }
 
 
     public boolean existsEdge(Node u, Node v){
@@ -255,7 +269,7 @@ public class Graph {
         return false;
     }
 
-    
+
     public boolean isMultiEdge(Node u, Node v){return true;}
     public void addEdge(Node from, Node to){}
     public boolean removeEdge(Node from, Node to){return true;}
