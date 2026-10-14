@@ -69,8 +69,31 @@ public class Graph {
 
 
     public int nbNodes(){return adjEdList.size();}
-    public boolean usesNode(Node n){return true;}
+
+
+    public boolean usesNode(Node n){
+        for(Node node : adjEdList.keySet()){
+            if(node.getId()==n.getId()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public boolean usesNode(int id){
+        for(Node node : adjEdList.keySet()){
+            if(node.getId()==id){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     public boolean holdsNode(Node n){return adjEdList.containsKey(n);}
+
+
     public Node getNode(int id){
         for(Node n : adjEdList.keySet()){
             if(n.getId()==id){
@@ -79,15 +102,71 @@ public class Graph {
         }
         return null;
     }
+
+
     public boolean addNode(Node n){
         if(adjEdList.containsKey(n)) return false;
         adjEdList.put(n, new ArrayList<>());
         return true;
     }
-    public boolean removeNode(Node n){return true;}
+
+
+    public boolean removeNode(Node n){
+        
+        if (n == null) {
+            return false;
+        }
+        adjEdList.remove(n);
+
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            List<Edge> edges = entry.getValue();
+            
+            edges.removeIf(edge -> edge.to().getId() == n.getId());
+        }
+        return true;
+    }
+
+    public boolean removeNode(int id){
+        if (!this.usesNode(id)) {
+            return false;
+        }
+        Node n = this.getNode(id);
+        adjEdList.remove(n);
+
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            List<Edge> edges = entry.getValue();
+            
+            edges.removeIf(edge -> edge.to().getId() == id);
+        }
+        return true;
+    }
+
+
     public List<Node> getAllNodes(){return new ArrayList<>(adjEdList.keySet());}
-    public int largestNodeId(){return 0;}
-    public int smallestNodeId(){return 0;}
+
+
+    public int largestNodeId(){
+        int max = -1;
+        for(Node n : adjEdList.keySet()){
+            if(max<n.getId()) {
+                max = n.getId();
+            }
+        }
+        return max;
+    }
+
+
+    public int smallestNodeId(){
+        int min = Integer.MAX_VALUE;
+        for(Node n : adjEdList.keySet()){
+            if(min>n.getId()) {
+                min = n.getId();
+            }
+        }
+        return min;
+    }
+
+    
     public List<Node> getSuccessors(Node n){return null;}
     public List<Node> getSuccessorsMulti(Node n){return null;}
     public boolean adjacent(Node u, Node v){return true;}
@@ -99,10 +178,14 @@ public class Graph {
     public boolean isMultiEdge(Node u, Node v){return true;}
     public void addEdge(Node from, Node to){}
     public boolean removeEdge(Node from, Node to){return true;}
+
+
     public List<Edge> getOutEdges(Node n){
         List<Edge> edges = adjEdList.get(n);
         return edges == null ? new ArrayList<>() : new ArrayList<>(edges);
     }
+
+
     public List<Edge> getInEdges(Node n){return null;}
     public List<Edge> getIncidentEdges(Node n){return null;}
     public List<Edge> getEdges(Node u, Node v){return null;}
