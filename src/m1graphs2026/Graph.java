@@ -229,13 +229,33 @@ public class Graph {
         return result;
     }
 
-    
-    public boolean adjacent(Node u, Node v){return true;}
+
+    public boolean adjacent(Node u, Node v){
+        return (existsEdge(u, v)|| existsEdge(v, u));
+    }
+
     public int inDegree(Node n){return n.inDegree();}
     public int outDegree(Node n){return n.outDegree();}
     public int degree(Node n){return n.degree();}
     public int nbEdges(){return 0;}
-    public boolean existsEdge(Node u, Node v){return true;}
+
+
+    public boolean existsEdge(Node u, Node v){
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            Node node = entry.getKey();
+            if(node.equals(u)){
+                List<Edge> edges = entry.getValue();
+                for(Edge e : edges) {
+                    if(e.to().equals(v)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    
     public boolean isMultiEdge(Node u, Node v){return true;}
     public void addEdge(Node from, Node to){}
     public boolean removeEdge(Node from, Node to){return true;}
