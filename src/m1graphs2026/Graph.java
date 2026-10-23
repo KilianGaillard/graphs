@@ -254,25 +254,226 @@ public class Graph {
     }
 
 
-    public boolean existsEdge(Node u, Node v){
-        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
-            Node node = entry.getKey();
-            if(node.equals(u)){
-                List<Edge> edges = entry.getValue();
-                for(Edge e : edges) {
-                    if(e.to().equals(v)) {
-                        return true;
-                    }
+    public boolean existsEdge(Node u, Node v) {
+        if (u == null || v == null || !adjEdList.containsKey(u)) {
+            return false;
+        }
+        for (Edge e : adjEdList.get(u)) {
+            if (e.to().equals(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean existsEdge(int id1, int id2) {
+        Node u = getNode(id1);
+        Node v = getNode(id2);
+        if (u == null || v == null) {
+            return false;
+        }
+        return existsEdge(u, v);
+    }
+
+    public boolean existsEdge(Edge e) {
+        if (e == null) {
+            return false;
+        }
+        return existsEdge(e.from(), e.to());
+    }
+
+
+    public boolean isMultiEdge(Node u, Node v) {
+        if (u == null || v == null || !adjEdList.containsKey(u)) {
+            return false;
+        }
+        int count = 0;
+        for (Edge e : adjEdList.get(u)) {
+            if (e.to().equals(v)) {
+                count++;
+                if (count >= 2) {
+                    return true;
                 }
             }
         }
         return false;
     }
 
+    public boolean isMultiEdge(int id1, int id2) {
+        Node u = getNode(id1);
+        Node v = getNode(id2);
+        if (u == null || v == null) {
+            return false;
+        }
+        return isMultiEdge(u, v);
+    }
 
-    public boolean isMultiEdge(Node u, Node v){return true;}
-    public void addEdge(Node from, Node to){}
-    public boolean removeEdge(Node from, Node to){return true;}
+    public boolean isMultiEdge(Edge e) {
+        if (e == null) {
+            return false;
+        }
+        return isMultiEdge(e.from(), e.to());
+    }
+
+
+    public void addEdge(Node from, Node to){
+        if(!usesNode(from)){
+            addNode(from);
+        }
+        if(!usesNode(to)){
+            addNode(to);
+        }
+        Edge e = new Edge(from, to);
+        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
+            Node node = entry.getKey();
+            if(node.equals(from)){
+                this.adjEdList.get(node).add(e);
+            }
+        }
+
+    }
+
+
+    public void addEdge(Node from, Node to, int weight){
+        if(!usesNode(from)){
+            addNode(from);
+        }
+        if(!usesNode(to)){
+            addNode(to);
+        }
+        Edge e = new Edge(from, to,weight);
+        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
+            Node node = entry.getKey();
+            if(node.equals(from)){
+                this.adjEdList.get(node).add(e);
+            }
+        }
+    }
+
+
+    public void addEdge(int id1, int id2){
+        if(!usesNode(id1)){
+            Node from = new Node(id1,this);
+            addNode(from);
+            if(!usesNode(id2)){
+                Node to = new Node(id2, this);
+                addNode(to);
+                addEdge(from,to);
+            }
+            else {
+                addEdge(from,this.getNode(id2));
+            }
+        }
+        else {
+            if(!usesNode(id2)){
+                Node to = new Node(id2, this);
+                addNode(to);
+                addEdge(getNode(id1),to);
+            }else {
+                addEdge(getNode(id1), getNode(id2));
+            }
+            
+        }
+    }
+
+    public void addEdge(int id1, int id2, int weight){
+        if(!usesNode(id1)){
+            Node from = new Node(id1,this);
+            addNode(from);
+            if(!usesNode(id2)){
+                Node to = new Node(id2, this);
+                addNode(to);
+                addEdge(from,to,weight);
+            }
+            else {
+                addEdge(from,this.getNode(id2),weight);
+            }
+        }
+        else {
+            if(!usesNode(id2)){
+                Node to = new Node(id2, this);
+                addNode(to);
+                addEdge(getNode(id1),to,weight);
+            }else {
+                addEdge(getNode(id1), getNode(id2),weight);
+            }
+            
+        }
+    }
+
+    public void addEdge(Edge e){
+        if(!usesNode(e.from())){
+           addNode(e.from());
+        }
+        if(!usesNode(e.to())){
+            addNode(e.to());
+        }
+        addEdge(e.from(), e.to());
+    }
+
+    public void addEdge(Edge e, int weight){
+        if(!usesNode(e.from())){
+           addNode(e.from());
+        }
+        if(!usesNode(e.to())){
+            addNode(e.to());
+        }
+        addEdge(e.from(), e.to(), weight);
+    }
+
+
+    public boolean removeEdge(Node from, Node to){
+        if(!usesNode(from)||!usesNode(to)){
+            return false;
+        }
+        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
+            Node node = entry.getKey();
+            if(node.equals(from)){
+               for(Edge e : entry.getValue()){
+                    if(e.from().equals(from)&&e.to().equals(to)){
+                        adjEdList.remove(node,e);
+                        return true;
+                    }
+               }
+            }
+        }
+        return false;
+    }
+
+
+    public boolean removeEdge(Node from, Node to, int weight){
+        return(removeEdge(from,to));
+    }
+
+
+    public boolean removeEdge(int id1, int id2){
+        if(!usesNode(id1)||!usesNode(id2)){
+            return false;
+        }
+        return removeEdge(getNode(id1),getNode(id2));
+    }
+
+    public boolean removeEdge(int id1, int id2, int weight){
+        if(!usesNode(id1)||!usesNode(id2)){
+            return false;
+        }
+        return removeEdge(getNode(id1),getNode(id2),weight);
+    }
+
+    public boolean removeEdge(Edge e){
+        if(!existsEdge(e)){
+           return false;
+        }
+        return removeEdge(e.from(),e.to());
+    }
+
+    public boolean removeEdge(Edge e, int weight){
+        if(!existsEdge(e)){
+           return false;
+        }
+        return removeEdge(e.from(),e.to(),weight);
+    }
+    
 
 
     public List<Edge> getOutEdges(Node n){
@@ -280,20 +481,198 @@ public class Graph {
         return edges == null ? new ArrayList<>() : new ArrayList<>(edges);
     }
 
+    public List<Edge> getOutEdges(int id){
+        return getOutEdges(getNode(id));
+    }
 
-    public List<Edge> getInEdges(Node n){return null;}
-    public List<Edge> getIncidentEdges(Node n){return null;}
-    public List<Edge> getEdges(Node u, Node v){return null;}
-    public List<Edge> getAllEdges(){return null;}
-    public int [] toSuccessorArray(){return null;}
-    public int [] [] toAdjMatrix(){return null;}
-    public Graph getReverse(){return null;}
-    public Graph getTransitiveClosure(){return null;}
-    public boolean isMultiGraph(){return true;}
-    public boolean isSimpleGraph(){return true;}
-    public boolean hasSelfLoops(){return true;}
-    public Graph toSimpleGraph(){return null;}
-    public Graph copy(){return null;}
+
+    public List<Edge> getInEdges(Node n){
+        List<Edge> res = new ArrayList<>();
+        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
+            for(Edge e : entry.getValue()){
+                    if(e.to().equals(n)){
+                        res.add(e);
+                    }
+            }
+        }
+        return res;
+    }
+
+    public List<Edge> getInEdges(int id){
+        return getInEdges(getNode(id));
+    }
+
+
+    public List<Edge> getIncidentEdges(Node n){
+        List<Edge> in = getInEdges(n);
+        List<Edge> res = getOutEdges(n);
+        for(Edge e : in){
+            res.add(e);
+        }
+        return res;
+    }
+    public List<Edge> getIncidentEdges(int id){
+        return getIncidentEdges(getNode(id));
+    }
+
+    public List<Edge> getEdges(Node u, Node v){
+        List<Edge> out_u = getOutEdges(u);
+        List<Edge> res = new ArrayList<>();
+        for(Edge e : out_u){
+            if(e.to().equals(v)){
+                res.add(e);
+            }
+        }
+        return res;
+    }
+
+    public List<Edge> getAllEdges(){
+        List<Edge> res = new ArrayList<>();
+        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
+            for(Edge e : entry.getValue()){
+                res.add(e);
+            }
+        }
+        return res;
+    }
+
+
+    public int [] toSuccessorArray(){
+        int[] res = new int[nbEdges()+nbNodes()];
+        int insertion = 0;
+        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
+            for(Edge e : entry.getValue()){
+                res[insertion] = e.to().getId();
+                insertion++;
+            }
+            res[insertion] = 0;
+            insertion++;
+        }
+        return res;
+    }
+    
+    public int[][] toAdjMatrix() {
+        int n = nbNodes();
+        int[][] matrix = new int[n][n];
+
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            Node fromNode = entry.getKey();
+            int rowIndex = fromNode.getId() - 1;
+
+            for (Edge edge : entry.getValue()) {
+                int colIndex = edge.to().getId() - 1;
+                matrix[rowIndex][colIndex]++;
+            }
+        }
+
+        return matrix;
+    }
+
+
+    public Graph getReverse() {
+        Graph reverseGraph = new Graph();
+
+        for (Node n : this.getAllNodes()) {
+            reverseGraph.addNode(new Node(n.getId(), reverseGraph));
+        }
+
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            for (Edge edge : entry.getValue()) {
+                if (edge.isWeighted()) {
+                    reverseGraph.addEdge(edge.to().getId(), edge.from().getId(), edge.getWeight());
+                } else {
+                    reverseGraph.addEdge(edge.to().getId(), edge.from().getId());
+                }
+            }
+        }
+
+        return reverseGraph;
+    }
+
+
+    
+    public Graph getTransitiveClosure() {
+        Graph closure = this.copy();
+        List<Node> nodes = closure.getAllNodes();
+
+        for (Node k : nodes) {
+            for (Node i : nodes) {
+                for (Node j : nodes) {
+                    // Si un chemin existe de i à k ET de k à j
+                    if (closure.existsEdge(i, k) && closure.existsEdge(k, j)) {
+                        // Et qu'il n'y a pas déjà d'arc direct de i à j
+                        if (!closure.existsEdge(i, j)) {
+                            closure.addEdge(i, j);
+                        }
+                    }
+                }
+            }
+        }
+
+        return closure;
+    }
+
+
+    public boolean isMultiGraph(){
+        List<Edge> edges = getAllEdges();
+        for(Edge e : edges){
+            if(isMultiEdge(e)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public boolean isSimpleGraph(){
+        return isMultiGraph() && hasSelfLoops();
+    }
+
+
+    public boolean hasSelfLoops(){
+        List<Edge> edges = getAllEdges();
+        for(Edge e : edges){
+            if(e.from().equals(e.to())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public Graph toSimpleGraph() {
+        if (this.isSimpleGraph()) {
+            return this.copy();
+        }
+        Graph simple = new Graph();
+
+        for (Node n : this.getAllNodes()) {
+            simple.addNode(new Node(n.getId(), simple));
+        }
+
+        for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
+            Node u = entry.getKey();
+
+            for (Edge e : entry.getValue()) {
+                Node v = e.to();
+
+                if (!u.equals(v) && !simple.existsEdge(u.getId(), v.getId())) {
+                    if (e.isWeighted()) {
+                        simple.addEdge(u.getId(), v.getId(), e.getWeight());
+                    } else {
+                        simple.addEdge(u.getId(), v.getId());
+                    }
+                }
+            }
+        }
+        return simple;
+    }
+    
+    public Graph copy() {
+        return new Graph(this.toSuccessorArray());
+    }
+
+    
     public List<Node> getDFS(){return null;}
     public List<Node> getDFS(Node u){return null;}
     public List<Node> getBFS(){return null;}
