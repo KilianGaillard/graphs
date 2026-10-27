@@ -1,10 +1,16 @@
 package m1graphs2026;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+/**
+ * Enumeration representing the color state of a node during graph traversal.
+ */
+enum NodeColor { WHITE, GRAY, BLACK }
 
 public class Graph {
     Map<Node, List<Edge>> adjEdList;
@@ -673,8 +679,90 @@ public class Graph {
     }
 
     
-    public List<Node> getDFS(){return null;}
-    public List<Node> getDFS(Node u){return null;}
+    /**
+     * Performs a Depth-First Search (DFS) traversal of the entire graph,
+     * starting by default from the node with the lowest id.
+     *
+     * @return a list of nodes in the order they were first discovered during the traversal
+     */
+    public List<Node> getDFS() {
+        List<Node> nodes = getAllNodes();
+        if (nodes.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Collections.sort(nodes); 
+        return getDFS(nodes.get(0));
+    }
+
+    /**
+     * Performs a Depth-First Search (DFS) traversal of the graph starting from a specified node.
+     * Unvisited nodes from other connected components are visited afterwards.
+     * Those methods are inspired from the course of Graf of this year, presented by Ms SONIGA
+     *
+     * @param u the starting node for the traversal
+     * @return a list of nodes in the order they were first discovered during the traversal,
+     *         or an empty list if the node does not belong to the graph
+     */
+    public List<Node> getDFS(Node u) {
+        List<Node> result = new ArrayList<>();
+        if (u == null || !holdsNode(u)) {
+            return result;
+        }
+
+        Map<Node, NodeColor> colorMap = new HashMap<>();
+        List<Node> allNodes = getAllNodes();
+        
+        for (Node n : allNodes) {
+            colorMap.put(n, NodeColor.WHITE);
+        }
+
+        dfsVisit(u, colorMap, result);
+
+        Collections.sort(allNodes);
+        for (Node n : allNodes) {
+            if (colorMap.get(n) == NodeColor.WHITE) {
+                dfsVisit(n, colorMap, result);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Performs a Depth-First Search (DFS) traversal of the graph starting from the node with the given id.
+     *
+     * @param id the identifier of the starting node
+     * @return a list of nodes in the order they were first discovered during the traversal
+     */
+    public List<Node> getDFS(int id) {
+        return getDFS(getNode(id));
+    }
+
+    /**
+     * Auxiliary recursive method for visiting a node during Depth-First Search.
+     *
+     * @param u the node currently being visited
+     * @param colorMap a map tracking the color state of each node
+     * @param result the list collecting nodes in discovery order
+     */
+    private void dfsVisit(Node u, Map<Node, NodeColor> colorMap, List<Node> result) {
+        colorMap.put(u, NodeColor.GRAY);
+        result.add(u);
+
+        List<Edge> outEdges = getOutEdges(u);
+        Collections.sort(outEdges);
+
+        for (Edge e : outEdges) {
+            Node v = e.to();
+            if (colorMap.get(v) == NodeColor.WHITE) {
+                dfsVisit(v, colorMap, result);
+            }
+        }
+
+        colorMap.put(u, NodeColor.BLACK);
+    }
+
+
     public List<Node> getBFS(){return null;}
     public List<Node> getBFS(Node u){return null;}
     // public List<Node> getDFSWithVisitInfo(Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit){return null;}
