@@ -1,10 +1,12 @@
 package m1graphs2026;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -763,8 +765,106 @@ public class Graph {
     }
 
 
-    public List<Node> getBFS(){return null;}
-    public List<Node> getBFS(Node u){return null;}
+    /**
+     * Performs a Breadth-First Search (BFS) traversal of the entire graph,
+     * starting by default from the node with the lowest id.
+     *
+     * @return a list of nodes in the order they were visited during the traversal[cite: 24]
+     */
+    public List<Node> getBFS() {
+        List<Node> nodes = getAllNodes();
+        if (nodes.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Sort nodes by increasing order of id for output reproducibility (Section 5.6)[cite: 24]
+        Collections.sort(nodes);
+
+        // Start traversal from the node with the lowest id[cite: 24]
+        return getBFS(nodes.get(0));
+    }
+
+    /**
+     * Performs a Breadth-First Search (BFS) traversal of the graph starting from a specified node[cite: 24].
+     * Unvisited nodes from other connected components are visited afterwards.
+     *
+     * @param u the starting node for the traversal[cite: 24]
+     * @return a list of nodes in the order they were visited during the traversal[cite: 24],
+     *         or an empty list if the node does not belong to the graph
+     */
+    public List<Node> getBFS(Node u) {
+        List<Node> result = new ArrayList<>();
+        if (u == null || !holdsNode(u)) {
+            return result;
+        }
+
+        Map<Node, NodeColor> colorMap = new HashMap<>();
+        List<Node> allNodes = getAllNodes();
+
+        // Initialize all nodes to WHITE (unvisited)
+        for (Node n : allNodes) {
+            colorMap.put(n, NodeColor.WHITE);
+        }
+
+        // 1. Visit starting from node u
+        bfsVisit(u, colorMap, result);
+
+        // 2. Visit any remaining unvisited nodes (handles disconnected components)
+        Collections.sort(allNodes); // Ensure deterministic traversal order (Section 5.6)[cite: 24]
+        for (Node n : allNodes) {
+            if (colorMap.get(n) == NodeColor.WHITE) {
+                bfsVisit(n, colorMap, result);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Performs a Breadth-First Search (BFS) traversal of the graph starting from the node with the given id[cite: 24].
+     *
+     * @param id the identifier of the starting node[cite: 24]
+     * @return a list of nodes in the order they were visited during the traversal[cite: 24]
+     */
+    public List<Node> getBFS(int id) {
+        return getBFS(getNode(id));
+    }
+
+    /**
+     * Auxiliary method for visiting nodes level by level using a FIFO queue.
+     *
+     * @param start the node from which to start the BFS iteration
+     * @param colorMap a map tracking the color state of each node
+     * @param result the list collecting nodes in discovery order
+     */
+    private void bfsVisit(Node start, Map<Node, NodeColor> colorMap, List<Node> result) {
+        Queue<Node> queue = new ArrayDeque<>();
+
+        // Discover starting node
+        colorMap.put(start, NodeColor.GRAY);
+        queue.add(start);
+
+        while (!queue.isEmpty()) {
+            Node u = queue.poll();
+            result.add(u);
+
+            // Sort outgoing edges to guarantee deterministic traversal order (Section 5.6)[cite: 24]
+            List<Edge> outEdges = getOutEdges(u);
+            Collections.sort(outEdges);
+
+            for (Edge e : outEdges) {
+                Node v = e.to();
+                if (colorMap.get(v) == NodeColor.WHITE) {
+                    colorMap.put(v, NodeColor.GRAY); // Mark as discovered
+                    queue.add(v);
+                }
+            }
+
+            colorMap.put(u, NodeColor.BLACK); // Mark as fully processed
+        }
+    }
+
+    
     // public List<Node> getDFSWithVisitInfo(Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit){return null;}
     // public List<Node> getDFSWithVisitInfo(Node u, Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit){return null;}
     public static Graph fromDotFile(String filename){return null;}
