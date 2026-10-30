@@ -33,7 +33,7 @@ public class Node implements Comparable<Node>{
      * @param id which provides the identifier of the
      * graph, and the @param graph associated.
      */
-    Node(int id, Graph graph) {
+    public Node(int id, Graph graph) {
         this.id = id;
         this.graph = graph;
     }
@@ -44,7 +44,7 @@ public class Node implements Comparable<Node>{
      * @param name for the optionnal name
      * @param graph for the Graph associated
      */
-    Node(int id, String name, Graph graph) {
+    public Node(int id, String name, Graph graph) {
         this.id = id;
         this.name = name;
         this.graph = graph;
@@ -212,6 +212,11 @@ public class Node implements Comparable<Node>{
             }
         }
         return results;
+    }
+
+    @Override
+    public String toString() {
+        return name != null ? name + "(" + id + ")" : String.valueOf(id);
     }
 
 }

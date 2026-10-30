@@ -46,19 +46,21 @@ public class Edge implements Comparable<Edge>{
             return Objects.hash(from, to, weight);
         }
 
-        @Override 
-        public int compareTo(Edge other){
-            if(this.from.getId()==other.from.getId()){
-                if(this.to.getId()==other.to.getId()){
-                    return Integer.compare(this.weight, other.weight);
-                }
-                else {
-                    return Integer.compare(this.to.getId(), other.to.getId());
-                }
-            }
-            else {
+        @Override
+        public int compareTo(Edge other) {
+            if (this.from.getId() != other.from.getId()) {
                 return Integer.compare(this.from.getId(), other.from.getId());
             }
+            if (this.to.getId() != other.to.getId()) {
+                return Integer.compare(this.to.getId(), other.to.getId());
+            }
+            
+            // Gestion sécurisée des poids null
+            if (this.weight == null && other.weight == null) return 0;
+            if (this.weight == null) return -1;
+            if (other.weight == null) return 1;
+            
+            return Integer.compare(this.weight, other.weight);
         }
 
         public Node from(){return this.from;}
@@ -66,15 +68,9 @@ public class Edge implements Comparable<Edge>{
         public Edge getSymmetric(){return new Edge(this.to,this.from,this.weight);}
         public boolean isSelfLoop(){return this.from==this.to;}
 
-        public boolean isMultiEdge(){
-            int count = 0;
-            for(Node n : this.from.getGraph().adjEdList.keySet()){
-                if(n==this.from){
-                    count++;
-                }
-            }
-            return (count>=2);
-        
+        public boolean isMultiEdge() {
+            if (from == null || from.getGraph() == null) return false;
+            return from.getGraph().isMultiEdge(this);
         }
         public boolean isWeighted(){return this.weight!=null;}
         public Integer getWeight(){return this.weight;}

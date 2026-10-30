@@ -138,53 +138,31 @@ public class Graph {
     }
 
 
-    /**
-     * Builds a graph from its Successor Array (SA) representation.
-     * The successors of node 1 are listed first, terminated by a 0, then those
-     * of node 2 terminated by a 0, and so on. The number of nodes is therefore
-     * the number of 0s in the array. Only unweighted graphs can be built this way.
-     *
-     * @param sa the successor array (also accepts an unspecified number of ints)
-     * @throws IllegalArgumentException if sa is null, does not end with 0,
-     * or contains a negative value or a successor id greater than the number of nodes
-     */
-    public Graph(int... sa){
+    public Graph(int... sa) {
         this();
-        if(sa == null){
+        if (sa == null) {
             throw new IllegalArgumentException("Successor array is null");
         }
-        if(sa.length > 0 && sa[sa.length - 1] != 0){
+        if (sa.length > 0 && sa[sa.length - 1] != 0) {
             throw new IllegalArgumentException("Successor array must end with 0");
         }
 
-        // the number of nodes is the number of 0s
         int nbNodes = 0;
-        for(int v : sa){
-            if(v < 0){
-                throw new IllegalArgumentException("Negative value in successor array: " + v);
-            }
-            if(v == 0){
-                nbNodes++;
-            }
+        for (int v : sa) {
+            if (v < 0) throw new IllegalArgumentException("Negative value: " + v);
+            if (v == 0) nbNodes++;
         }
 
-        // create the nodes 1..nbNodes (nodes[i] is the node with id i)
-        Node[] nodes = new Node[nbNodes + 1];
-        for(int i = 1; i <= nbNodes; i++){
-            nodes[i] = new Node(i, this);
-            this.adjEdList.put(nodes[i], new ArrayList<>());
+        for (int i = 1; i <= nbNodes; i++) {
+            addNode(i);
         }
 
-        // create the edges
         int current = 1;
-        for(int v : sa){
-            if(v == 0){
+        for (int v : sa) {
+            if (v == 0) {
                 current++;
             } else {
-                if(v > nbNodes){
-                    throw new IllegalArgumentException("Unknown successor id: " + v);
-                }
-                this.adjEdList.get(nodes[current]).add(new Edge(nodes[current], nodes[v]));
+                addEdge(current, v);
             }
         }
     }
@@ -534,24 +512,36 @@ public class Graph {
         }
     }
 
-    public void addEdge(Edge e){
-        if(!usesNode(e.from())){
-           addNode(e.from());
+    public void addEdge(Edge e) {
+        if (e == null) return;
+
+        Node fromNode = e.from();
+        Node toNode = e.to();
+
+        int idFrom = (fromNode != null) ? fromNode.getId() : 0;
+        int idTo = (toNode != null) ? toNode.getId() : 0;
+
+        if (idFrom == 0 || idTo == 0) return; // Évite de créer un nœud '0' invalide
+
+        if (e.isWeighted()) {
+            addEdge(idFrom, idTo, e.getWeight());
+        } else {
+            addEdge(idFrom, idTo);
         }
-        if(!usesNode(e.to())){
-            addNode(e.to());
-        }
-        addEdge(e.from(), e.to());
     }
 
-    public void addEdge(Edge e, int weight){
-        if(!usesNode(e.from())){
-           addNode(e.from());
-        }
-        if(!usesNode(e.to())){
-            addNode(e.to());
-        }
-        addEdge(e.from(), e.to(), weight);
+    public void addEdge(Edge e, int weight) {
+        if (e == null) return;
+
+        Node fromNode = e.from();
+        Node toNode = e.to();
+
+        int idFrom = (fromNode != null) ? fromNode.getId() : 0;
+        int idTo = (toNode != null) ? toNode.getId() : 0;
+
+        if (idFrom == 0 || idTo == 0) return;
+
+        addEdge(idFrom, idTo, weight);
     }
 
 
@@ -603,14 +593,22 @@ public class Graph {
      * Overload for removing an edge by node IDs (without specifying weight).
      */
     public boolean removeEdge(int id1, int id2) {
-        return removeEdge(getNode(id1), getNode(id2));
+        Node u = getNode(id1);
+        Node v = getNode(id2);
+        if (u == null || v == null) return false;
+        return removeEdge(u, v);
     }
+
+    
 
     /**
      * Overload for removing an edge by node IDs and a specific weight.
      */
     public boolean removeEdge(int id1, int id2, Integer weight) {
-        return removeEdge(getNode(id1), getNode(id2), weight);
+        Node u = getNode(id1);
+        Node v = getNode(id2);
+        if (u == null || v == null) return false;
+        return removeEdge(u, v, weight);
     }
 
     /**
@@ -697,7 +695,8 @@ public class Graph {
 
 
     public int[] toSuccessorArray() {
-        int[] res = new int[nbEdges() + nbNodes()];
+        int totalPhysicalEdges = getAllEdges().size();
+        int[] res = new int[totalPhysicalEdges + nbNodes()];
         int insertion = 0;
 
         List<Node> nodes = getAllNodes();
@@ -1130,53 +1129,47 @@ public class Graph {
     // 5.5 Graph Import and Export (DOT Format)
     // ==========================================
 
-    /**
-     * Imports a graph from a restricted DOT format file with default extension '.gv'[cite: 31].
-     *
-     * @param filename absolute path to the file without extension[cite: 31]
-     * @return the constructed Graph instance[cite: 31]
-     */
-    public static Graph fromDotFile(String filename) {
-        return fromDotFile(filename, "gv");
-    }
+    public static <T extends Graph> T fromDotFile(String filename, String extension, Class<T> graphClass) {
+        try {
+            T graph = graphClass.getDeclaredConstructor().newInstance();
+            String fullPath = filename + "." + extension;
 
-    /**
-     * Imports a graph from a restricted DOT format file with a custom extension[cite: 31].
-     *
-     * @param filename absolute path to the file without extension[cite: 31]
-     * @param extension file extension (e.g., "dot" or "gv")[cite: 31]
-     * @return the constructed Graph instance[cite: 31]
-     */
-    public static Graph fromDotFile(String filename, String extension) {
-        Graph graph = new Graph();
-        String fullPath = filename + "." + extension;
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(fullPath))) {
+                String line;
+                // Expressions régulières adaptées aux flèches '->' et '--'
+                java.util.regex.Pattern edgePattern = java.util.regex.Pattern.compile(
+                    "^\\s*(\\d+)\\s*(?:->|--)\\s*(\\d+)(?:\\s*\\[(?:label=(\\d+),\\s*len=\\d+|len=\\d+,\\s*label=(\\d+))\\])?\\s*;?\\s*$"
+                );
 
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(fullPath))) {
-            String line;
-            java.util.regex.Pattern edgePattern = java.util.regex.Pattern.compile(
-                "^\\s*(\\d+)\\s*->\\s*(\\d+)(?:\\s*\\[label=(\\d+),\\s*len=\\d+\\])?\\s*;?\\s*$"
-            );
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    java.util.regex.Matcher matcher = edgePattern.matcher(line);
+                    if (matcher.find()) {
+                        int fromId = Integer.parseInt(matcher.group(1));
+                        int toId = Integer.parseInt(matcher.group(2));
+                        String wStr = matcher.group(3) != null ? matcher.group(3) : matcher.group(4);
 
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                java.util.regex.Matcher matcher = edgePattern.matcher(line);
-                if (matcher.find()) {
-                    int fromId = Integer.parseInt(matcher.group(1));
-                    int toId = Integer.parseInt(matcher.group(2));
-
-                    if (matcher.group(3) != null) {
-                        int weight = Integer.parseInt(matcher.group(3));
-                        graph.addEdge(fromId, toId, weight);
-                    } else {
-                        graph.addEdge(fromId, toId);
+                        if (wStr != null) {
+                            int weight = Integer.parseInt(wStr);
+                            graph.addEdge(fromId, toId, weight);
+                        } else {
+                            graph.addEdge(fromId, toId);
+                        }
                     }
                 }
             }
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
+            return graph;
+        } catch (Exception e) {
+            return null;
         }
+    }
 
-        return graph;
+    public static Graph fromDotFile(String filename) {
+        return fromDotFile(filename, "gv", Graph.class);
+    }
+
+    public static Graph fromDotFile(String filename, String extension) {
+        return fromDotFile(filename, extension, Graph.class);
     }
 
     /**

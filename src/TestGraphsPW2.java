@@ -4,7 +4,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import m1graphs2026.*;
+import m1graphs2026.Graph;
+import m1graphs2026.Node;
+import m1graphs2026.Edge;
+import m1graphs2026.UndirectedGraph;
 
 public class TestGraphsPW2 {
 
