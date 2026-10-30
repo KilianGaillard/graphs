@@ -14,6 +14,119 @@ import java.util.Set;
  */
 enum NodeColor { WHITE, GRAY, BLACK }
 
+
+/**
+ * Enumeration representing the classification of an edge during an enriched Depth-First Search (DFS) traversal[cite: 31].
+ */
+enum EdgeVisitType { 
+    /** Tree edge in the DFS forest[cite: 7, 31]. */
+    TREE, 
+    /** Back edge leading to an ancestor in the DFS tree[cite: 7, 31]. */
+    BACKWARD, 
+    /** Forward edge leading to a non-child descendant in the DFS tree[cite: 7, 31]. */
+    FORWARD, 
+    /** Cross edge leading to a node already completed or in another tree[cite: 7, 31]. */
+    CROSS 
+}
+
+/**
+ * Encapsulates graph traversal metadata for a node during an enriched Depth-First Search (DFS)[cite: 31].
+ * Stores node color, predecessor in the search tree, discovery timestamp, and finish timestamp[cite: 2, 31].
+ */
+class NodeVisitInfo {
+    private NodeColor color;
+    private Node predecessor;
+    private Integer discoveryTime;
+    private Integer finishTime;
+
+    /**
+     * Constructs a new NodeVisitInfo instance with specified traversal attributes[cite: 31].
+     *
+     * @param color the current color state of the node (WHITE, GRAY, or BLACK)[cite: 2, 31]
+     * @param predecessor the parent node in the DFS search forest, or null if root/unvisited[cite: 2, 31]
+     * @param discoveryTime the timestamp when the node was first discovered[cite: 2, 31]
+     * @param finishTime the timestamp when the node processing was completed[cite: 2, 31]
+     */
+    public NodeVisitInfo(NodeColor color, Node predecessor, Integer discoveryTime, Integer finishTime) {
+        this.color = color;
+        this.predecessor = predecessor;
+        this.discoveryTime = discoveryTime;
+        this.finishTime = finishTime;
+    }
+
+    /**
+     * Gets the current color state of the node[cite: 31].
+     *
+     * @return the node color[cite: 31]
+     */
+    public NodeColor getColor() { 
+        return color; 
+    }
+
+    /**
+     * Sets the color state of the node[cite: 31].
+     *
+     * @param color the new color state[cite: 31]
+     */
+    public void setColor(NodeColor color) { 
+        this.color = color; 
+    }
+
+    /**
+     * Gets the predecessor node in the DFS tree[cite: 31].
+     *
+     * @return the predecessor node, or null if none[cite: 31]
+     */
+    public Node getPredecessor() { 
+        return predecessor; 
+    }
+
+    /**
+     * Sets the predecessor node in the DFS tree[cite: 31].
+     *
+     * @param predecessor the parent node[cite: 31]
+     */
+    public void setPredecessor(Node predecessor) { 
+        this.predecessor = predecessor; 
+    }
+
+    /**
+     * Gets the discovery timestamp of the node[cite: 31].
+     *
+     * @return the discovery timestamp, or null if unvisited[cite: 31]
+     */
+    public Integer getDiscoveryTime() { 
+        return discoveryTime; 
+    }
+
+    /**
+     * Sets the discovery timestamp of the node[cite: 31].
+     *
+     * @param discoveryTime the time when the node was discovered[cite: 31]
+     */
+    public void setDiscoveryTime(Integer discoveryTime) { 
+        this.discoveryTime = discoveryTime; 
+    }
+
+    /**
+     * Gets the finish timestamp of the node[cite: 31].
+     *
+     * @return the finish timestamp, or null if processing is incomplete[cite: 31]
+     */
+    public Integer getFinishTime() { 
+        return finishTime; 
+    }
+
+    /**
+     * Sets the finish timestamp of the node[cite: 31].
+     *
+     * @param finishTime the time when node exploration was completed[cite: 31]
+     */
+    public void setFinishTime(Integer finishTime) { 
+        this.finishTime = finishTime; 
+    }
+}
+
 public class Graph {
     Map<Node, List<Edge>> adjEdList;
 
@@ -120,6 +233,13 @@ public class Graph {
         return true;
     }
 
+    public boolean addNode(int id) {
+    if (usesNode(id)) {
+        return false;
+    }
+    return addNode(new Node(id, this));
+}
+
 
     public boolean removeNode(Node n){
         
@@ -193,7 +313,7 @@ public class Graph {
     }
 
 
-    public List<Node> getSuccesors(int id){
+    public List<Node> getSuccessors(int id){
         Set<Node> result = new LinkedHashSet<>();
         for (Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()) {
             Node node = entry.getKey();
@@ -244,11 +364,16 @@ public class Graph {
 
     public int inDegree(Node n){return n.inDegree();}
 
+    public int inDegree(int id) { return inDegree(getNode(id)); }
+
 
     public int outDegree(Node n){return n.outDegree();}
 
+    public int outDegree(int id) { return outDegree(getNode(id)); }
 
     public int degree(Node n){return n.degree();}
+
+    public int degree(int id) { return degree(getNode(id)); }
 
 
     public int nbEdges(){
@@ -430,56 +555,78 @@ public class Graph {
     }
 
 
-    public boolean removeEdge(Node from, Node to){
-        if(!usesNode(from)||!usesNode(to)){
+    /**
+     * Removes the first edge found from node 'from' to node 'to', regardless of its weight.
+     *
+     * @param from the source node
+     * @param to the target node
+     * @return true if an edge was found and removed, false otherwise
+     */
+    public boolean removeEdge(Node from, Node to) {
+        if (from == null || to == null || !adjEdList.containsKey(from)) {
             return false;
         }
-        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
-            Node node = entry.getKey();
-            if(node.equals(from)){
-               for(Edge e : entry.getValue()){
-                    if(e.from().equals(from)&&e.to().equals(to)){
-                        adjEdList.remove(node,e);
-                        return true;
-                    }
-               }
+        List<Edge> edges = adjEdList.get(from);
+        for (int i = 0; i < edges.size(); i++) {
+            if (edges.get(i).to().equals(to)) {
+                edges.remove(i);
+                return true;
             }
         }
         return false;
     }
 
-
-    public boolean removeEdge(Node from, Node to, int weight){
-        return(removeEdge(from,to));
-    }
-
-
-    public boolean removeEdge(int id1, int id2){
-        if(!usesNode(id1)||!usesNode(id2)){
+    /**
+     * Removes an edge between nodes 'from' and 'to' matching a specific weight.
+     *
+     * @param from the source node
+     * @param to the target node
+     * @param weight the weight of the edge to remove (can be null for unweighted)
+     * @return true if a matching edge was found and removed, false otherwise
+     */
+    public boolean removeEdge(Node from, Node to, Integer weight) {
+        if (from == null || to == null || !adjEdList.containsKey(from)) {
             return false;
         }
-        return removeEdge(getNode(id1),getNode(id2));
+        List<Edge> edges = adjEdList.get(from);
+        for (int i = 0; i < edges.size(); i++) {
+            Edge e = edges.get(i);
+            if (e.to().equals(to) && java.util.Objects.equals(e.getWeight(), weight)) {
+                edges.remove(i);
+                return true;
+            }
+        }
+        return false;
     }
 
-    public boolean removeEdge(int id1, int id2, int weight){
-        if(!usesNode(id1)||!usesNode(id2)){
-            return false;
-        }
-        return removeEdge(getNode(id1),getNode(id2),weight);
+    /**
+     * Overload for removing an edge by node IDs (without specifying weight).
+     */
+    public boolean removeEdge(int id1, int id2) {
+        return removeEdge(getNode(id1), getNode(id2));
     }
 
-    public boolean removeEdge(Edge e){
-        if(!existsEdge(e)){
-           return false;
-        }
-        return removeEdge(e.from(),e.to());
+    /**
+     * Overload for removing an edge by node IDs and a specific weight.
+     */
+    public boolean removeEdge(int id1, int id2, Integer weight) {
+        return removeEdge(getNode(id1), getNode(id2), weight);
     }
 
-    public boolean removeEdge(Edge e, int weight){
-        if(!existsEdge(e)){
-           return false;
-        }
-        return removeEdge(e.from(),e.to(),weight);
+    /**
+     * Overload for removing an edge using an Edge instance reference.
+     */
+    public boolean removeEdge(Edge e) {
+        if (e == null) return false;
+        return removeEdge(e.from(), e.to(), e.getWeight());
+    }
+
+    /**
+     * Overload for removing an edge using an Edge instance reference and an explicit weight override.
+     */
+    public boolean removeEdge(Edge e, Integer weight) {
+        if (e == null) return false;
+        return removeEdge(e.from(), e.to(), weight);
     }
     
 
@@ -534,6 +681,10 @@ public class Graph {
         return res;
     }
 
+    public List<Edge> getEdges(int id1, int id2) {
+        return getEdges(getNode(id1), getNode(id2));
+    }
+
     public List<Edge> getAllEdges(){
         List<Edge> res = new ArrayList<>();
         for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
@@ -545,16 +696,21 @@ public class Graph {
     }
 
 
-    public int [] toSuccessorArray(){
-        int[] res = new int[nbEdges()+nbNodes()];
+    public int[] toSuccessorArray() {
+        int[] res = new int[nbEdges() + nbNodes()];
         int insertion = 0;
-        for(Map.Entry<Node, List<Edge>> entry : adjEdList.entrySet()){
-            for(Edge e : entry.getValue()){
-                res[insertion] = e.to().getId();
-                insertion++;
+
+        List<Node> nodes = getAllNodes();
+        Collections.sort(nodes); // Exigence Section 5.6
+
+        for (Node u : nodes) {
+            List<Edge> edges = getOutEdges(u);
+            Collections.sort(edges); // Exigence Section 5.6
+
+            for (Edge e : edges) {
+                res[insertion++] = e.to().getId();
             }
-            res[insertion] = 0;
-            insertion++;
+            res[insertion++] = 0;
         }
         return res;
     }
@@ -633,7 +789,7 @@ public class Graph {
 
 
     public boolean isSimpleGraph(){
-        return isMultiGraph() && hasSelfLoops();
+        return !isMultiGraph() && !hasSelfLoops();
     }
 
 
@@ -677,7 +833,18 @@ public class Graph {
     }
     
     public Graph copy() {
-        return new Graph(this.toSuccessorArray());
+        Graph copyGraph = new Graph();
+        for (Node n : getAllNodes()) {
+            copyGraph.addNode(new Node(n.getId(), copyGraph));
+        }
+        for (Edge e : getAllEdges()) {
+            if (e.isWeighted()) {
+                copyGraph.addEdge(e.from().getId(), e.to().getId(), e.getWeight());
+            } else {
+                copyGraph.addEdge(e.from().getId(), e.to().getId());
+            }
+        }
+        return copyGraph;
     }
 
     
@@ -865,13 +1032,205 @@ public class Graph {
     }
 
     
-    // public List<Node> getDFSWithVisitInfo(Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit){return null;}
-    // public List<Node> getDFSWithVisitInfo(Node u, Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit){return null;}
-    public static Graph fromDotFile(String filename){return null;}
-    public static Graph fromDotFile(String filename, String extension){return null;}
-    public String toDotString(){return null;}
-    public void toDotFile(String fileName){}
-    public void toDotFile(String fileName, String extension){}
+    // Global counter for timestamps in DFS with visit info
+    private static int dfsTime = 0;
+
+    /**
+     * Performs an enriched Depth-First Search (DFS) traversal starting from the node with the lowest id[cite: 31].
+     * Populates nodeVisit and edgeVisit maps with traversal metrics (colors, timestamps, predecessors, edge types)[cite: 31].
+     *
+     * @param nodeVisit map associating each node with its visit metadata[cite: 31]
+     * @param edgeVisit map associating each edge with its DFS classification[cite: 31]
+     * @return a list of nodes in discovery order[cite: 31]
+     */
+    public List<Node> getDFSWithVisitInfo(Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit) {
+        List<Node> nodes = getAllNodes();
+        if (nodes.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Collections.sort(nodes); // Reproducibility requirement (Section 5.6)[cite: 32]
+        return getDFSWithVisitInfo(nodes.get(0), nodeVisit, edgeVisit);
+    }
+
+    /**
+     * Performs an enriched Depth-First Search (DFS) traversal starting from a given node u[cite: 31].
+     *
+     * @param u the starting node for the traversal[cite: 31]
+     * @param nodeVisit map associating each node with its visit metadata[cite: 31]
+     * @param edgeVisit map associating each edge with its DFS classification[cite: 31]
+     * @return a list of nodes in discovery order[cite: 31]
+     */
+    public List<Node> getDFSWithVisitInfo(Node u, Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit) {
+        List<Node> result = new ArrayList<>();
+        if (u == null || !holdsNode(u) || nodeVisit == null || edgeVisit == null) {
+            return result;
+        }
+
+        nodeVisit.clear();
+        edgeVisit.clear();
+        dfsTime = 0;
+
+        List<Node> allNodes = getAllNodes();
+        for (Node n : allNodes) {
+            nodeVisit.put(n, new NodeVisitInfo(NodeColor.WHITE, null, null, null));
+        }
+
+        // 1. Visit starting from u
+        dfsVisitWithInfo(u, nodeVisit, edgeVisit, result);
+
+        // 2. Visit remaining unvisited nodes
+        Collections.sort(allNodes); // Section 5.6[cite: 32]
+        for (Node n : allNodes) {
+            if (nodeVisit.get(n).getColor() == NodeColor.WHITE) {
+                dfsVisitWithInfo(n, nodeVisit, edgeVisit, result);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Auxiliary recursive method for enriched DFS traversal.
+     */
+    private void dfsVisitWithInfo(Node u, Map<Node, NodeVisitInfo> nodeVisit, Map<Edge, EdgeVisitType> edgeVisit, List<Node> result) {
+        dfsTime++;
+        NodeVisitInfo uInfo = nodeVisit.get(u);
+        uInfo.setColor(NodeColor.GRAY);
+        uInfo.setDiscoveryTime(dfsTime);
+        result.add(u);
+
+        List<Edge> outEdges = getOutEdges(u);
+        Collections.sort(outEdges); // Section 5.6[cite: 32]
+
+        for (Edge e : outEdges) {
+            Node v = e.to();
+            NodeVisitInfo vInfo = nodeVisit.get(v);
+
+            if (vInfo.getColor() == NodeColor.WHITE) {
+                edgeVisit.put(e, EdgeVisitType.TREE);
+                vInfo.setPredecessor(u);
+                dfsVisitWithInfo(v, nodeVisit, edgeVisit, result);
+            } else if (vInfo.getColor() == NodeColor.GRAY) {
+                edgeVisit.put(e, EdgeVisitType.BACKWARD);
+            } else if (vInfo.getColor() == NodeColor.BLACK) {
+                if (uInfo.getDiscoveryTime() < vInfo.getDiscoveryTime()) {
+                    edgeVisit.put(e, EdgeVisitType.FORWARD);
+                } else {
+                    edgeVisit.put(e, EdgeVisitType.CROSS);
+                }
+            }
+        }
+
+        uInfo.setColor(NodeColor.BLACK);
+        dfsTime++;
+        uInfo.setFinishTime(dfsTime);
+    }
+
+    // ==========================================
+    // 5.5 Graph Import and Export (DOT Format)
+    // ==========================================
+
+    /**
+     * Imports a graph from a restricted DOT format file with default extension '.gv'[cite: 31].
+     *
+     * @param filename absolute path to the file without extension[cite: 31]
+     * @return the constructed Graph instance[cite: 31]
+     */
+    public static Graph fromDotFile(String filename) {
+        return fromDotFile(filename, "gv");
+    }
+
+    /**
+     * Imports a graph from a restricted DOT format file with a custom extension[cite: 31].
+     *
+     * @param filename absolute path to the file without extension[cite: 31]
+     * @param extension file extension (e.g., "dot" or "gv")[cite: 31]
+     * @return the constructed Graph instance[cite: 31]
+     */
+    public static Graph fromDotFile(String filename, String extension) {
+        Graph graph = new Graph();
+        String fullPath = filename + "." + extension;
+
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(fullPath))) {
+            String line;
+            java.util.regex.Pattern edgePattern = java.util.regex.Pattern.compile(
+                "^\\s*(\\d+)\\s*->\\s*(\\d+)(?:\\s*\\[label=(\\d+),\\s*len=\\d+\\])?\\s*;?\\s*$"
+            );
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                java.util.regex.Matcher matcher = edgePattern.matcher(line);
+                if (matcher.find()) {
+                    int fromId = Integer.parseInt(matcher.group(1));
+                    int toId = Integer.parseInt(matcher.group(2));
+
+                    if (matcher.group(3) != null) {
+                        int weight = Integer.parseInt(matcher.group(3));
+                        graph.addEdge(fromId, toId, weight);
+                    } else {
+                        graph.addEdge(fromId, toId);
+                    }
+                }
+            }
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+
+        return graph;
+    }
+
+    /**
+     * Exports the graph as a String using standard DOT language format[cite: 32].
+     *
+     * @return DOT formatted String representation of the graph[cite: 32]
+     */
+    public String toDotString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("digraph G {\n");
+
+        List<Node> nodes = getAllNodes();
+        Collections.sort(nodes); // Reproducibility requirement (Section 5.6)[cite: 32]
+
+        for (Node u : nodes) {
+            List<Edge> edges = getOutEdges(u);
+            Collections.sort(edges); // Reproducibility requirement (Section 5.6)[cite: 32]
+
+            for (Edge e : edges) {
+                sb.append("  ").append(e.from().getId()).append(" -> ").append(e.to().getId());
+                if (e.isWeighted()) {
+                    sb.append(" [label=").append(e.getWeight()).append(", len=").append(e.getWeight()).append("]");
+                }
+                sb.append("\n");
+            }
+        }
+
+        sb.append("}\n");
+        return sb.toString();
+    }
+
+    /**
+     * Exports the graph to a file in DOT syntax with default extension '.gv'[cite: 32].
+     *
+     * @param fileName absolute path without extension[cite: 32]
+     */
+    public void toDotFile(String fileName) {
+        toDotFile(fileName, "gv");
+    }
+
+    /**
+     * Exports the graph to a file in DOT syntax with a custom extension[cite: 32].
+     *
+     * @param fileName absolute path without extension[cite: 32]
+     * @param extension custom file extension[cite: 32]
+     */
+    public void toDotFile(String fileName, String extension) {
+        String fullPath = fileName + "." + extension;
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(fullPath))) {
+            writer.print(toDotString());
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 
