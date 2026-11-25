@@ -1,7 +1,9 @@
 package m1TSP2026;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -45,5 +47,22 @@ public class TSP {
 
     public TSP(){
         this(DEFAULT_SIZE, DEFAULT_SQUARE_SIZE);
+    }
+
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("graph {\n");
+
+        List<NodeInPlane> sortedNodes = new ArrayList<>(this.nodes);
+        Collections.sort(sortedNodes);
+
+        for(NodeInPlane n : sortedNodes) {
+            sb.append(" ").append(n.getId()).append(" [pos=\"").append(n.getPosition().getX()).append(" ,").append(n.getPosition().getY()).append("!\"]\n");
+        }
+
+        sb.append("}\n");
+
+        return sb.toString();
     }
 }

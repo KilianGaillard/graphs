@@ -95,6 +95,8 @@ public class NodeInPlane extends Node{
         this.position = new PlanePosition(squareSize);
     }
 
+    public PlanePosition getPosition(){return this.position;}
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
