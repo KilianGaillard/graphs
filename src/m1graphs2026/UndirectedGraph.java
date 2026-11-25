@@ -252,6 +252,39 @@ public class UndirectedGraph extends Graph {
     }
 
     /**
+     * Builds a copy of this undirected graph: new nodes (belonging to the copy)
+     * and new edges with the same end identifiers and the same weights. This
+     * graph is not modified, and modifying the copy does not modify this graph.
+     *
+     * <p><b>Implementation choices:</b> the inherited {@link Graph#copy()}
+     * cannot be used because it returns a plain directed {@link Graph}. The
+     * copy cannot either be built by calling {@code addEdge} on every edge of
+     * {@link #getAllEdges()}: each undirected edge is already stored in both
+     * directions, and {@code addEdge} would add both directions again, which
+     * would duplicate every edge. Each stored edge is therefore copied
+     * as-is into the adjacency list of its (copied) source node, which
+     * reproduces exactly the symmetric structure of this graph, including its
+     * self-loops (stored once) and its parallel edges.</p>
+     *
+     * @return a new {@code UndirectedGraph} with the same nodes and the same
+     *         edges (and weights) as this graph
+     */
+    @Override
+    public UndirectedGraph copy() {
+        UndirectedGraph copyGraph = new UndirectedGraph();
+        for (Node n : getAllNodes()) {
+            copyGraph.addNode(new Node(n.getId(), n.getName(), copyGraph));
+        }
+        for (Edge e : getAllEdges()) {
+            Node newFrom = copyGraph.getNode(e.from().getId());
+            Node newTo = copyGraph.getNode(e.to().getId());
+            // Direct insertion: the symmetric edge is itself part of getAllEdges()
+            copyGraph.adjEdList.get(newFrom).add(new Edge(newFrom, newTo, e.getWeight()));
+        }
+        return copyGraph;
+    }
+
+    /**
      * Builds the reverse of this graph. Reversing all the edges of an
      * undirected graph gives back the same edges, so the result has the same
      * nodes and the same edges as this graph. This graph is not modified.
