@@ -47,6 +47,11 @@ public class PlanePosition {
         return Objects.hash(x,y);
     }
 
+    @Override
+    public String toString() {
+        return "(" + x + "," + y + ")";
+    }
+
     public double distanceWith(PlanePosition p){
         return Math.abs((Math.sqrt(Math.pow((p.x - this.x), 2) + Math.pow((p.y - this.y), 2))));
     }
