@@ -6,6 +6,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 
 public class PlanePosition {
+
+    private static final int DEFAULT_SQUARE_SIZE = 100;
+
     private final int x;
     private final int y;
 
@@ -23,7 +26,7 @@ public class PlanePosition {
     }
 
     public PlanePosition(){
-        this(100);
+        this(DEFAULT_SQUARE_SIZE);
     }
 
 
